@@ -5,6 +5,7 @@ import { CategoryCard } from "@/components/forum/CategoryCard";
 import { PostCard } from "@/components/forum/PostCard";
 import { RaceEventForm, RaceEventData } from "@/components/forum/RaceEventForm";
 import { RaceCalendar } from "@/components/forum/RaceCalendar";
+import { EventDetailsModal } from "@/components/forum/EventDetailsModal";
 import { EventFiltersComponent, EventFilters } from "@/components/forum/EventFilters";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,6 +23,8 @@ const Index = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [showRaceForm, setShowRaceForm] = useState(false);
   const [showAuthForm, setShowAuthForm] = useState(false);
+  const [showEventDetails, setShowEventDetails] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<any>(null);
   const [activeTab, setActiveTab] = useState("forum");
   const [eventFilters, setEventFilters] = useState<EventFilters>({
     location: "",
@@ -87,6 +90,11 @@ const Index = () => {
       dateFrom: null,
       dateTo: null
     });
+  };
+
+  const handleEventClick = (event: any) => {
+    setSelectedEvent(event);
+    setShowEventDetails(true);
   };
 
   if (categoriesLoading || postsLoading || eventsLoading) {
@@ -198,10 +206,7 @@ const Index = () => {
               
               <RaceCalendar
                 events={filteredEvents}
-                onEventClick={(event) => toast({ 
-                  title: event.title, 
-                  description: `${event.location} - ${new Date(event.event_date).toLocaleDateString()}` 
-                })}
+                onEventClick={handleEventClick}
               />
             </div>
           </TabsContent>
@@ -221,6 +226,12 @@ const Index = () => {
             <AuthForm onSuccess={() => setShowAuthForm(false)} />
           </DialogContent>
         </Dialog>
+
+        <EventDetailsModal
+          event={selectedEvent}
+          isOpen={showEventDetails}
+          onClose={() => setShowEventDetails(false)}
+        />
       </div>
     </div>
   );
