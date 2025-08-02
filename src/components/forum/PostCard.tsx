@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { ArrowUp, ArrowDown, MessageSquare, Clock } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
+import { usePostVotes, useVotePost } from "@/hooks/useVotes";
+import { useAuth } from "@/hooks/useAuth";
 
 interface Post {
   id: string;
@@ -23,6 +25,20 @@ interface PostCardProps {
 }
 
 export const PostCard = ({ post, onClick }: PostCardProps) => {
+  const { data: voteStats } = usePostVotes(post.id);
+  const votePost = useVotePost();
+  const { isAuthenticated } = useAuth();
+
+  const handleVote = async (voteType: number) => {
+    if (!isAuthenticated) return;
+    
+    try {
+      await votePost.mutateAsync({ postId: post.id, voteType });
+    } catch (error) {
+      console.error("Error voting:", error);
+    }
+  };
+
   const getCategoryStyles = (categoryName?: string) => {
     switch (categoryName) {
       case 'Próximas Carreras':
@@ -61,12 +77,30 @@ export const PostCard = ({ post, onClick }: PostCardProps) => {
             <p className="text-sm text-muted-foreground mb-2">por {post.author_name}</p>
           </div>
           <div className="flex flex-col items-center gap-1">
-            <Button variant="ghost" size="sm" className="p-1 h-auto">
-              <ArrowUp className="w-4 h-4 text-forum-upvote" />
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className={`p-1 h-auto ${voteStats?.userVote === 1 ? 'bg-forum-upvote/20' : ''}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleVote(1);
+              }}
+              disabled={!isAuthenticated}
+            >
+              <ArrowUp className={`w-4 h-4 ${voteStats?.userVote === 1 ? 'text-forum-upvote' : 'text-muted-foreground'}`} />
             </Button>
-            <span className="text-sm font-medium">0</span>
-            <Button variant="ghost" size="sm" className="p-1 h-auto">
-              <ArrowDown className="w-4 h-4 text-forum-downvote" />
+            <span className="text-sm font-medium">{voteStats?.total || 0}</span>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className={`p-1 h-auto ${voteStats?.userVote === -1 ? 'bg-forum-downvote/20' : ''}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleVote(-1);
+              }}
+              disabled={!isAuthenticated}
+            >
+              <ArrowDown className={`w-4 h-4 ${voteStats?.userVote === -1 ? 'text-forum-downvote' : 'text-muted-foreground'}`} />
             </Button>
           </div>
         </div>

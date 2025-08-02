@@ -10,6 +10,7 @@ import { CalendarIcon, ImagePlus, MapPin, X } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import { useImageUpload } from "@/hooks/useImageUpload";
 
 interface RaceEventFormProps {
   onSubmit: (eventData: RaceEventData) => void;
@@ -34,6 +35,7 @@ export const RaceEventForm = ({ onSubmit, onCancel }: RaceEventFormProps) => {
   });
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>("");
+  const { uploadImage, isUploading } = useImageUpload();
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -53,9 +55,26 @@ export const RaceEventForm = ({ onSubmit, onCancel }: RaceEventFormProps) => {
     setFormData({ ...formData, image_url: "" });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(formData);
+    
+    try {
+      let imageUrl = formData.image_url;
+      
+      // Upload image if selected
+      if (selectedImage) {
+        imageUrl = await uploadImage(selectedImage, "race-images", "events");
+      }
+      
+      onSubmit({
+        ...formData,
+        image_url: imageUrl
+      });
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      // Still submit without image if upload fails
+      onSubmit(formData);
+    }
   };
 
   return (

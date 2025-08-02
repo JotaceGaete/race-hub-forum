@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { ForumHeader } from "@/components/forum/ForumHeader";
+import { AuthForm } from "@/components/auth/AuthForm";
 import { CategoryCard } from "@/components/forum/CategoryCard";
 import { PostCard } from "@/components/forum/PostCard";
 import { RaceEventForm, RaceEventData } from "@/components/forum/RaceEventForm";
@@ -20,6 +21,7 @@ const Index = () => {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [showRaceForm, setShowRaceForm] = useState(false);
+  const [showAuthForm, setShowAuthForm] = useState(false);
   const [activeTab, setActiveTab] = useState("forum");
   const [eventFilters, setEventFilters] = useState<EventFilters>({
     location: "",
@@ -104,6 +106,7 @@ const Index = () => {
         <ForumHeader 
           onCreatePost={() => toast({ title: "Función en desarrollo", description: "Próximamente disponible" })}
           onCreateRace={() => setShowRaceForm(true)}
+          onShowAuth={() => setShowAuthForm(true)}
         />
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
@@ -210,6 +213,12 @@ const Index = () => {
               onSubmit={handleCreateRaceEvent}
               onCancel={() => setShowRaceForm(false)}
             />
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={showAuthForm} onOpenChange={setShowAuthForm}>
+          <DialogContent className="max-w-md">
+            <AuthForm onSuccess={() => setShowAuthForm(false)} />
           </DialogContent>
         </Dialog>
       </div>
