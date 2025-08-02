@@ -82,6 +82,8 @@ export type Database = {
           content: string
           created_at: string
           id: string
+          media_types: string[] | null
+          media_urls: string[] | null
           post_id: string
           updated_at: string
           user_id: string
@@ -90,6 +92,8 @@ export type Database = {
           content: string
           created_at?: string
           id?: string
+          media_types?: string[] | null
+          media_urls?: string[] | null
           post_id: string
           updated_at?: string
           user_id: string
@@ -98,6 +102,8 @@ export type Database = {
           content?: string
           created_at?: string
           id?: string
+          media_types?: string[] | null
+          media_urls?: string[] | null
           post_id?: string
           updated_at?: string
           user_id?: string
