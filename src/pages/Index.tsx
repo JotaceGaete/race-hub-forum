@@ -9,52 +9,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { Search, Calendar, List } from "lucide-react";
+import { Search, Calendar, List, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-
-// Mock data - esto se reemplazará con datos reales de Supabase
-const mockCategories = [
-  { id: "1", name: "Próximas Carreras", description: "Anuncios de carreras y eventos deportivos", color: "#EF4444" },
-  { id: "2", name: "General", description: "Discusiones generales", color: "#3B82F6" },
-  { id: "3", name: "Entrenamiento", description: "Tips y consejos de entrenamiento", color: "#10B981" },
-  { id: "4", name: "Equipamiento", description: "Reseñas y recomendaciones de equipo", color: "#F59E0B" },
-];
-
-const mockPosts = [
-  {
-    id: "1",
-    title: "¿Cuál es vuestra rutina de entrenamiento favorita?",
-    content: "Estoy buscando nuevas ideas para variar mi entrenamiento semanal. ¿Qué rutinas funcionan mejor para vosotros?",
-    author_name: "RunnerPro",
-    created_at: new Date().toISOString(),
-    category: { name: "Entrenamiento", color: "#10B981" }
-  },
-  {
-    id: "2",
-    title: "Reseña: Zapatillas Nike Air Zoom Pegasus 40",
-    content: "Después de 500km con estas zapatillas, aquí está mi reseña completa...",
-    author_name: "MaratonMania",
-    created_at: new Date(Date.now() - 3600000).toISOString(),
-    category: { name: "Equipamiento", color: "#F59E0B" }
-  }
-];
-
-const mockRaceEvents = [
-  {
-    id: "1",
-    title: "Maratón Valencia 2024",
-    description: "El maratón más rápido de España",
-    event_date: "2024-12-01",
-    location: "Valencia, España"
-  },
-  {
-    id: "2",
-    title: "Media Maratón Madrid",
-    description: "Carrera por el centro histórico de Madrid",
-    event_date: "2024-11-15",
-    location: "Madrid, España"
-  }
-];
+import { useCategories } from "@/hooks/useCategories";
+import { usePosts } from "@/hooks/usePosts";
+import { useRaceEvents, useCreateRaceEvent } from "@/hooks/useRaceEvents";
+import { seedInitialData } from "@/utils/seedData";
 
 const Index = () => {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -66,16 +26,26 @@ const Index = () => {
     dateFrom: null,
     dateTo: null
   });
+  
   const { toast } = useToast();
+  const { data: categories = [], isLoading: categoriesLoading } = useCategories();
+  const { data: posts = [], isLoading: postsLoading } = usePosts();
+  const { data: raceEvents = [], isLoading: eventsLoading } = useRaceEvents();
+  const createRaceEventMutation = useCreateRaceEvent();
 
-  const filteredPosts = mockPosts.filter(post => {
+  // Inicializar datos de ejemplo al cargar la aplicación
+  useEffect(() => {
+    seedInitialData();
+  }, []);
+
+  const filteredPosts = posts.filter(post => {
     const matchesSearch = post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         post.content.toLowerCase().includes(searchTerm.toLowerCase());
+                         (post.content || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = !selectedCategory || post.category?.name === selectedCategory;
     return matchesSearch && matchesCategory;
   });
 
-  const filteredEvents = mockRaceEvents.filter(event => {
+  const filteredEvents = raceEvents.filter(event => {
     const matchesLocation = !eventFilters.location || 
                            event.location.toLowerCase().includes(eventFilters.location.toLowerCase());
     const eventDate = new Date(event.event_date);
@@ -85,13 +55,28 @@ const Index = () => {
     return matchesLocation && matchesDateFrom && matchesDateTo;
   });
 
-  const handleCreateRaceEvent = (eventData: RaceEventData) => {
-    console.log("Crear evento:", eventData);
-    toast({
-      title: "¡Carrera publicada!",
-      description: "Tu evento ha sido publicado exitosamente."
-    });
-    setShowRaceForm(false);
+  const handleCreateRaceEvent = async (eventData: RaceEventData) => {
+    try {
+      await createRaceEventMutation.mutateAsync({
+        title: eventData.title,
+        description: eventData.description,
+        event_date: eventData.event_date.toISOString().split('T')[0],
+        location: eventData.location,
+        image_url: eventData.image_url
+      });
+      
+      toast({
+        title: "¡Carrera publicada!",
+        description: "Tu evento ha sido publicado exitosamente."
+      });
+      setShowRaceForm(false);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Hubo un problema al publicar el evento. Inténtalo de nuevo.",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleClearFilters = () => {
@@ -102,9 +87,16 @@ const Index = () => {
     });
   };
 
-  const getCategoryName = (categoryId: string) => {
-    return mockCategories.find(cat => cat.id === categoryId)?.name || null;
-  };
+  if (categoriesLoading || postsLoading || eventsLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="flex items-center gap-2">
+          <Loader2 className="w-6 h-6 animate-spin" />
+          <span>Cargando foro...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -133,7 +125,7 @@ const Index = () => {
                 <div className="space-y-4">
                   <h2 className="text-xl font-semibold">Categorías</h2>
                   <div className="space-y-3">
-                    {mockCategories.map(category => (
+                    {categories.map(category => (
                       <CategoryCard
                         key={category.id}
                         category={category}
