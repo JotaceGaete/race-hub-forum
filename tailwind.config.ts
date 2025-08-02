@@ -61,7 +61,23 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				forum: {
+					upvote: 'hsl(var(--forum-upvote))',
+					downvote: 'hsl(var(--forum-downvote))',
+					race: 'hsl(var(--forum-race))',
+					general: 'hsl(var(--forum-general))',
+					training: 'hsl(var(--forum-training))',
+					equipment: 'hsl(var(--forum-equipment))'
 				}
+			},
+			backgroundImage: {
+				'gradient-forum': 'var(--gradient-forum)',
+				'gradient-race': 'var(--gradient-race)'
+			},
+			boxShadow: {
+				'card': 'var(--shadow-card)',
+				'hover': 'var(--shadow-hover)'
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
