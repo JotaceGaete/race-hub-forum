@@ -47,6 +47,76 @@ export const useRaceEvents = () => {
   });
 };
 
+export const useUpdateRaceEvent = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ id, eventData }: {
+      id: string;
+      eventData: {
+        title: string;
+        description: string;
+        event_date: string;
+        cancha_id?: string;
+        image_urls?: string[];
+      }
+    }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Usuario no autenticado");
+
+      const { data, error } = await supabase
+        .from("race_events")
+        .update({
+          ...eventData,
+          location: "", // Temporal para compatibilidad
+          image_url: eventData.image_urls?.[0] || null
+        })
+        .eq('id', id)
+        .eq('user_id', user.id) // Solo permitir editar sus propios eventos
+        .select(`
+          *,
+          cancha:canchas (
+            id,
+            nombre,
+            comuna,
+            latitud,
+            longitud,
+            direccion
+          )
+        `)
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["race_events"] });
+    },
+  });
+};
+
+export const useDeleteRaceEvent = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Usuario no autenticado");
+
+      const { error } = await supabase
+        .from("race_events")
+        .delete()
+        .eq('id', id)
+        .eq('user_id', user.id); // Solo permitir eliminar sus propios eventos
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["race_events"] });
+    },
+  });
+};
+
 export const useCreateRaceEvent = () => {
   const queryClient = useQueryClient();
   

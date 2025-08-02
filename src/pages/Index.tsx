@@ -15,7 +15,7 @@ import { Search, Calendar, List, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useCategories } from "@/hooks/useCategories";
 import { usePosts } from "@/hooks/usePosts";
-import { useRaceEvents, useCreateRaceEvent } from "@/hooks/useRaceEvents";
+import { useRaceEvents, useCreateRaceEvent, useUpdateRaceEvent, useDeleteRaceEvent } from "@/hooks/useRaceEvents";
 import { seedInitialData } from "@/utils/seedData";
 
 const Index = () => {
@@ -25,6 +25,7 @@ const Index = () => {
   const [showAuthForm, setShowAuthForm] = useState(false);
   const [showEventDetails, setShowEventDetails] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
+  const [editingEvent, setEditingEvent] = useState<any>(null);
   const [activeTab, setActiveTab] = useState("forum");
   const [eventFilters, setEventFilters] = useState<EventFilters>({
     location: "",
@@ -37,6 +38,8 @@ const Index = () => {
   const { data: posts = [], isLoading: postsLoading } = usePosts();
   const { data: raceEvents = [], isLoading: eventsLoading } = useRaceEvents();
   const createRaceEventMutation = useCreateRaceEvent();
+  const updateRaceEventMutation = useUpdateRaceEvent();
+  const deleteRaceEventMutation = useDeleteRaceEvent();
 
   // Inicializar datos de ejemplo al cargar la aplicación
   useEffect(() => {
@@ -63,23 +66,45 @@ const Index = () => {
 
   const handleCreateRaceEvent = async (eventData: RaceEventData) => {
     try {
-      await createRaceEventMutation.mutateAsync({
-        title: eventData.title,
-        description: eventData.description,
-        event_date: eventData.event_date.toISOString().split('T')[0],
-        cancha_id: eventData.cancha_id,
-        image_urls: eventData.image_urls || []
-      });
+      if (editingEvent) {
+        // Actualizar evento existente
+        await updateRaceEventMutation.mutateAsync({
+          id: editingEvent.id,
+          eventData: {
+            title: eventData.title,
+            description: eventData.description,
+            event_date: eventData.event_date.toISOString().split('T')[0],
+            cancha_id: eventData.cancha_id,
+            image_urls: eventData.image_urls || []
+          }
+        });
+        
+        toast({
+          title: "¡Carrera actualizada!",
+          description: "Tu evento ha sido actualizado exitosamente."
+        });
+      } else {
+        // Crear nuevo evento
+        await createRaceEventMutation.mutateAsync({
+          title: eventData.title,
+          description: eventData.description,
+          event_date: eventData.event_date.toISOString().split('T')[0],
+          cancha_id: eventData.cancha_id,
+          image_urls: eventData.image_urls || []
+        });
+        
+        toast({
+          title: "¡Carrera publicada!",
+          description: "Tu evento ha sido publicado exitosamente."
+        });
+      }
       
-      toast({
-        title: "¡Carrera publicada!",
-        description: "Tu evento ha sido publicado exitosamente."
-      });
       setShowRaceForm(false);
+      setEditingEvent(null);
     } catch (error) {
       toast({
         title: "Error",
-        description: "Hubo un problema al publicar el evento. Inténtalo de nuevo.",
+        description: editingEvent ? "Hubo un problema al actualizar el evento." : "Hubo un problema al publicar el evento.",
         variant: "destructive"
       });
     }
@@ -96,6 +121,21 @@ const Index = () => {
   const handleEventClick = (event: any) => {
     setSelectedEvent(event);
     setShowEventDetails(true);
+  };
+
+  const handleEditEvent = (event: any) => {
+    setEditingEvent(event);
+    setShowEventDetails(false);
+    setShowRaceForm(true);
+  };
+
+  const handleDeleteEvent = async (eventId: string) => {
+    try {
+      await deleteRaceEventMutation.mutateAsync(eventId);
+      setShowEventDetails(false);
+    } catch (error) {
+      // Error ya manejado en el hook
+    }
   };
 
   if (categoriesLoading || postsLoading || eventsLoading) {
@@ -213,11 +253,19 @@ const Index = () => {
           </TabsContent>
         </Tabs>
 
-        <Dialog open={showRaceForm} onOpenChange={setShowRaceForm}>
+        <Dialog open={showRaceForm} onOpenChange={() => {
+          setShowRaceForm(false);
+          setEditingEvent(null);
+        }}>
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <RaceEventForm
               onSubmit={handleCreateRaceEvent}
-              onCancel={() => setShowRaceForm(false)}
+              onCancel={() => {
+                setShowRaceForm(false);
+                setEditingEvent(null);
+              }}
+              initialData={editingEvent}
+              isEditing={!!editingEvent}
             />
           </DialogContent>
         </Dialog>
@@ -232,6 +280,8 @@ const Index = () => {
           event={selectedEvent}
           isOpen={showEventDetails}
           onClose={() => setShowEventDetails(false)}
+          onEdit={handleEditEvent}
+          onDelete={handleDeleteEvent}
         />
       </div>
     </div>

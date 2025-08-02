@@ -19,6 +19,8 @@ import { Link } from "react-router-dom";
 interface RaceEventFormProps {
   onSubmit: (eventData: RaceEventData) => void;
   onCancel: () => void;
+  initialData?: any;
+  isEditing?: boolean;
 }
 
 export interface RaceEventData {
@@ -29,17 +31,21 @@ export interface RaceEventData {
   image_urls?: string[];
 }
 
-export const RaceEventForm = ({ onSubmit, onCancel }: RaceEventFormProps) => {
+export const RaceEventForm = ({ onSubmit, onCancel, initialData, isEditing = false }: RaceEventFormProps) => {
   const [formData, setFormData] = useState<RaceEventData>({
-    title: "",
-    description: "",
-    event_date: new Date(),
-    cancha_id: "",
-    image_urls: []
+    title: initialData?.title || "",
+    description: initialData?.description || "",
+    event_date: initialData?.event_date ? new Date(initialData.event_date) : new Date(),
+    cancha_id: initialData?.cancha_id || "",
+    image_urls: initialData?.image_urls || []
   });
-  const [selectedComuna, setSelectedComuna] = useState<string>("");
+  const [selectedComuna, setSelectedComuna] = useState<string>(
+    initialData?.cancha?.comuna || ""
+  );
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
-  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>(
+    initialData?.image_urls || []
+  );
   const { uploadImage, isUploading } = useImageUpload();
   const { canchas, getCanchasPorComuna } = useCanchas();
 
@@ -97,10 +103,10 @@ export const RaceEventForm = ({ onSubmit, onCancel }: RaceEventFormProps) => {
       <CardHeader>
         <CardTitle className="text-2xl flex items-center gap-2">
           <div className="w-2 h-8 bg-gradient-race rounded"></div>
-          Anunciar Nueva Carrera
+          {isEditing ? "Editar Carrera" : "Anunciar Nueva Carrera"}
         </CardTitle>
         <CardDescription>
-          Comparte los detalles de tu próximo evento deportivo
+          {isEditing ? "Modifica los detalles de tu evento" : "Comparte los detalles de tu próximo evento deportivo"}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -279,8 +285,8 @@ export const RaceEventForm = ({ onSubmit, onCancel }: RaceEventFormProps) => {
           </div>
 
           <div className="flex gap-3 pt-6">
-            <Button type="submit" className="flex-1">
-              Publicar Carrera
+            <Button type="submit" className="flex-1" disabled={isUploading}>
+              {isUploading ? "Subiendo..." : (isEditing ? "Actualizar Carrera" : "Publicar Carrera")}
             </Button>
             <Button type="button" variant="outline" onClick={onCancel}>
               Cancelar
