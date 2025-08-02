@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, MapPin, FileText, User } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Calendar, MapPin, FileText, ChevronLeft, ChevronRight } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
@@ -11,6 +13,7 @@ interface RaceEvent {
   event_date: string;
   location: string;
   image_url: string | null;
+  image_urls: string[] | null;
   created_at: string;
   updated_at: string;
   user_id?: string;
@@ -23,10 +26,23 @@ interface EventDetailsModalProps {
 }
 
 export const EventDetailsModal = ({ event, isOpen, onClose }: EventDetailsModalProps) => {
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  
   if (!event) return null;
 
   const eventDate = new Date(event.event_date);
   const formattedDate = format(eventDate, "EEEE, d 'de' MMMM 'de' yyyy", { locale: es });
+  
+  // Get images from both old and new format
+  const images = event.image_urls || (event.image_url ? [event.image_url] : []);
+  
+  const nextImage = () => {
+    setCurrentImageIndex((prev) => (prev + 1) % images.length);
+  };
+  
+  const prevImage = () => {
+    setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -38,14 +54,52 @@ export const EventDetailsModal = ({ event, isOpen, onClose }: EventDetailsModalP
         </DialogHeader>
         
         <div className="space-y-6">
-          {/* Imagen del evento */}
-          {event.image_url && (
-            <div className="w-full">
-              <img 
-                src={event.image_url} 
-                alt={event.title}
-                className="w-full max-h-96 object-contain rounded-lg bg-muted"
-              />
+          {/* Carrusel de imágenes */}
+          {images.length > 0 && (
+            <div className="relative w-full">
+              <div className="relative">
+                <img 
+                  src={images[currentImageIndex]} 
+                  alt={`${event.title} - imagen ${currentImageIndex + 1}`}
+                  className="w-full max-h-96 object-contain rounded-lg bg-muted"
+                />
+                
+                {images.length > 1 && (
+                  <>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="absolute left-2 top-1/2 -translate-y-1/2 bg-background/80 hover:bg-background"
+                      onClick={prevImage}
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </Button>
+                    
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 bg-background/80 hover:bg-background"
+                      onClick={nextImage}
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </Button>
+                  </>
+                )}
+              </div>
+              
+              {images.length > 1 && (
+                <div className="flex justify-center gap-2 mt-2">
+                  {images.map((_, index) => (
+                    <button
+                      key={index}
+                      className={`w-2 h-2 rounded-full transition-colors ${
+                        index === currentImageIndex ? 'bg-forum-race' : 'bg-muted-foreground/30'
+                      }`}
+                      onClick={() => setCurrentImageIndex(index)}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           )}
 

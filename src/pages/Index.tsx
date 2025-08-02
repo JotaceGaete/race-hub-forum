@@ -67,7 +67,7 @@ const Index = () => {
         description: eventData.description,
         event_date: eventData.event_date.toISOString().split('T')[0],
         location: eventData.location,
-        image_url: eventData.image_url
+        image_urls: eventData.image_urls || []
       });
       
       toast({

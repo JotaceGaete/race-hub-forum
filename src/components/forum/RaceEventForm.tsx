@@ -22,7 +22,7 @@ export interface RaceEventData {
   description: string;
   event_date: Date;
   location: string;
-  image_url?: string;
+  image_urls?: string[];
 }
 
 export const RaceEventForm = ({ onSubmit, onCancel }: RaceEventFormProps) => {
@@ -31,48 +31,55 @@ export const RaceEventForm = ({ onSubmit, onCancel }: RaceEventFormProps) => {
     description: "",
     event_date: new Date(),
     location: "",
-    image_url: ""
+    image_urls: []
   });
-  const [selectedImage, setSelectedImage] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string>("");
+  const [selectedImages, setSelectedImages] = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const { uploadImage, isUploading } = useImageUpload();
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setSelectedImage(file);
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setImagePreview(e.target?.result as string);
-      };
-      reader.readAsDataURL(file);
+    const files = Array.from(e.target.files || []);
+    const newFiles = files.slice(0, 5 - selectedImages.length);
+    
+    if (newFiles.length > 0) {
+      setSelectedImages(prev => [...prev, ...newFiles]);
+      
+      newFiles.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          setImagePreviews(prev => [...prev, e.target?.result as string]);
+        };
+        reader.readAsDataURL(file);
+      });
     }
   };
 
-  const removeImage = () => {
-    setSelectedImage(null);
-    setImagePreview("");
-    setFormData({ ...formData, image_url: "" });
+  const removeImage = (index: number) => {
+    setSelectedImages(prev => prev.filter((_, i) => i !== index));
+    setImagePreviews(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     try {
-      let imageUrl = formData.image_url;
+      let imageUrls: string[] = formData.image_urls || [];
       
-      // Upload image if selected
-      if (selectedImage) {
-        imageUrl = await uploadImage(selectedImage, "race-images", "events");
+      // Upload images if selected
+      if (selectedImages.length > 0) {
+        const uploadPromises = selectedImages.map(image => 
+          uploadImage(image, "race-images", "events")
+        );
+        imageUrls = await Promise.all(uploadPromises);
       }
       
       onSubmit({
         ...formData,
-        image_url: imageUrl
+        image_urls: imageUrls
       });
     } catch (error) {
-      console.error("Error uploading image:", error);
-      // Still submit without image if upload fails
+      console.error("Error uploading images:", error);
+      // Still submit without images if upload fails
       onSubmit(formData);
     }
   };
@@ -162,36 +169,43 @@ export const RaceEventForm = ({ onSubmit, onCancel }: RaceEventFormProps) => {
           </div>
 
           <div className="space-y-2">
-            <Label>Imagen del Evento</Label>
+            <Label>Imágenes del Evento (hasta 5)</Label>
             <div className="space-y-4">
-              {imagePreview ? (
-                <div className="relative">
-                  <img
-                    src={imagePreview}
-                    alt="Preview"
-                    className="w-full h-48 object-cover rounded-lg"
-                  />
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="sm"
-                    className="absolute top-2 right-2"
-                    onClick={removeImage}
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
+              {imagePreviews.length > 0 && (
+                <div className="grid grid-cols-2 gap-4">
+                  {imagePreviews.map((preview, index) => (
+                    <div key={index} className="relative">
+                      <img
+                        src={preview}
+                        alt={`Preview ${index + 1}`}
+                        className="w-full h-32 object-cover rounded-lg"
+                      />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        className="absolute top-2 right-2"
+                        onClick={() => removeImage(index)}
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ))}
                 </div>
-              ) : (
+              )}
+              
+              {selectedImages.length < 5 && (
                 <label className="cursor-pointer">
                   <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center hover:border-muted-foreground/50 transition-colors">
                     <ImagePlus className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
                     <p className="text-muted-foreground">
-                      Haz clic para subir una imagen del evento
+                      Haz clic para subir imágenes del evento ({selectedImages.length}/5)
                     </p>
                   </div>
                   <input
                     type="file"
                     accept="image/*"
+                    multiple
                     onChange={handleImageChange}
                     className="hidden"
                   />

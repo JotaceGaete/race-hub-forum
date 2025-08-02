@@ -8,6 +8,7 @@ export interface RaceEvent {
   event_date: string;
   location: string;
   image_url: string | null;
+  image_urls: string[] | null;
   created_at: string;
   updated_at: string;
 }
@@ -36,7 +37,7 @@ export const useCreateRaceEvent = () => {
       description: string;
       event_date: string;
       location: string;
-      image_url?: string;
+      image_urls?: string[];
     }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Usuario no autenticado");
@@ -45,7 +46,9 @@ export const useCreateRaceEvent = () => {
         .from("race_events")
         .insert([{
           ...eventData,
-          user_id: user.id
+          user_id: user.id,
+          // Mantener compatibilidad con image_url por ahora
+          image_url: eventData.image_urls?.[0] || null
         }])
         .select()
         .single();
