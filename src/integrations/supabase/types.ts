@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      canchas: {
+        Row: {
+          activa: boolean
+          comuna: string
+          created_at: string
+          descripcion: string | null
+          direccion: string | null
+          id: string
+          latitud: number
+          longitud: number
+          nombre: string
+          updated_at: string
+        }
+        Insert: {
+          activa?: boolean
+          comuna: string
+          created_at?: string
+          descripcion?: string | null
+          direccion?: string | null
+          id?: string
+          latitud: number
+          longitud: number
+          nombre: string
+          updated_at?: string
+        }
+        Update: {
+          activa?: boolean
+          comuna?: string
+          created_at?: string
+          descripcion?: string | null
+          direccion?: string | null
+          id?: string
+          latitud?: number
+          longitud?: number
+          nombre?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       categories: {
         Row: {
           color: string | null
@@ -181,6 +220,7 @@ export type Database = {
       }
       race_events: {
         Row: {
+          cancha_id: string | null
           created_at: string | null
           description: string | null
           event_date: string
@@ -193,6 +233,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          cancha_id?: string | null
           created_at?: string | null
           description?: string | null
           event_date: string
@@ -205,6 +246,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          cancha_id?: string | null
           created_at?: string | null
           description?: string | null
           event_date?: string
@@ -214,6 +256,62 @@ export type Database = {
           location?: string
           title?: string
           updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "race_events_cancha_id_fkey"
+            columns: ["cancha_id"]
+            isOneToOne: false
+            referencedRelation: "canchas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      solicitudes_canchas: {
+        Row: {
+          comuna: string
+          contacto_email: string
+          contacto_nombre: string
+          contacto_telefono: string | null
+          created_at: string
+          descripcion: string | null
+          direccion_referencia: string | null
+          estado: string
+          id: string
+          nombre_cancha: string
+          notas_admin: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          comuna: string
+          contacto_email: string
+          contacto_nombre: string
+          contacto_telefono?: string | null
+          created_at?: string
+          descripcion?: string | null
+          direccion_referencia?: string | null
+          estado?: string
+          id?: string
+          nombre_cancha: string
+          notas_admin?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          comuna?: string
+          contacto_email?: string
+          contacto_nombre?: string
+          contacto_telefono?: string | null
+          created_at?: string
+          descripcion?: string | null
+          direccion_referencia?: string | null
+          estado?: string
+          id?: string
+          nombre_cancha?: string
+          notas_admin?: string | null
+          updated_at?: string
           user_id?: string | null
         }
         Relationships: []
