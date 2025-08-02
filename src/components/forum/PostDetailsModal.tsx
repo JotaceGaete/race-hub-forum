@@ -238,10 +238,13 @@ export const PostDetailsModal = ({ post, isOpen, onClose, onEdit, onDelete }: Po
               </div>
             ) : comments.length > 0 ? (
               <div className="space-y-4">
-                {comments.map((comment) => (
+                {comments.map((comment, index) => (
                   <div key={comment.id} className="border border-border rounded-lg p-4">
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
+                        <span className="text-xs font-medium text-primary/70 bg-primary/10 px-2 py-0.5 rounded">
+                          #{index + 1}
+                        </span>
                         <span className="font-medium text-sm">
                           {comment.user.full_name || comment.user.username}
                         </span>
