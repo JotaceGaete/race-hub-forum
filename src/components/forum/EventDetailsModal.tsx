@@ -140,7 +140,7 @@ export const EventDetailsModal = ({ event, isOpen, onClose, onEdit, onDelete }: 
                 <img 
                   src={images[currentImageIndex]} 
                   alt={`${event.title} - imagen ${currentImageIndex + 1}`}
-                  className="w-full max-h-96 object-contain rounded-lg bg-muted"
+                  className="w-full h-96 object-cover rounded-lg bg-muted"
                   onError={(e) => {
                     console.error('Error loading image:', images[currentImageIndex]);
                     e.currentTarget.src = '/placeholder.svg';

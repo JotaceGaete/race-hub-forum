@@ -6,6 +6,7 @@ import { PostCard } from "@/components/forum/PostCard";
 import { RaceEventForm, RaceEventData } from "@/components/forum/RaceEventForm";
 import { RaceCalendar } from "@/components/forum/RaceCalendar";
 import { EventDetailsModal } from "@/components/forum/EventDetailsModal";
+import { PostDetailsModal } from "@/components/forum/PostDetailsModal";
 import { EventFiltersComponent, EventFilters } from "@/components/forum/EventFilters";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,7 +25,9 @@ const Index = () => {
   const [showRaceForm, setShowRaceForm] = useState(false);
   const [showAuthForm, setShowAuthForm] = useState(false);
   const [showEventDetails, setShowEventDetails] = useState(false);
+  const [showPostDetails, setShowPostDetails] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
+  const [selectedPost, setSelectedPost] = useState<any>(null);
   const [editingEvent, setEditingEvent] = useState<any>(null);
   const [activeTab, setActiveTab] = useState("forum");
   const [eventFilters, setEventFilters] = useState<EventFilters>({
@@ -219,7 +222,10 @@ const Index = () => {
                       <PostCard
                         key={post.id}
                         post={post}
-                        onClick={() => toast({ title: "Post", description: `Abriendo: ${post.title}` })}
+                        onClick={() => {
+                          setSelectedPost(post);
+                          setShowPostDetails(true);
+                        }}
                       />
                     ))
                   ) : (
@@ -282,6 +288,14 @@ const Index = () => {
           onClose={() => setShowEventDetails(false)}
           onEdit={handleEditEvent}
           onDelete={handleDeleteEvent}
+        />
+
+        <PostDetailsModal
+          post={selectedPost}
+          isOpen={showPostDetails}
+          onClose={() => setShowPostDetails(false)}
+          onEdit={() => toast({ title: "Función en desarrollo", description: "Edición de posts próximamente" })}
+          onDelete={() => toast({ title: "Función en desarrollo", description: "Eliminación de posts próximamente" })}
         />
       </div>
     </div>

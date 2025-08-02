@@ -112,7 +112,7 @@ export const PostCard = ({ post, onClick }: PostCardProps) => {
         <div className="flex items-center gap-4 text-sm text-muted-foreground">
           <div className="flex items-center gap-1">
             <MessageSquare className="w-4 h-4" />
-            <span>0 comentarios</span>
+            <span>Ver comentarios</span>
           </div>
         </div>
       </CardContent>
