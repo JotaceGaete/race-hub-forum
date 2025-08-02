@@ -15,6 +15,7 @@ import { useImageUpload } from "@/hooks/useImageUpload";
 import { useCanchas } from "@/hooks/useCanchas";
 import { comunasChile } from "@/utils/comunasChile";
 import { Link } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 
 interface RaceEventFormProps {
   onSubmit: (eventData: RaceEventData) => void;
@@ -48,6 +49,7 @@ export const RaceEventForm = ({ onSubmit, onCancel, initialData, isEditing = fal
   );
   const { uploadImage, isUploading } = useImageUpload();
   const { canchas, getCanchasPorComuna } = useCanchas();
+  const { toast } = useToast();
 
   const canchasEnComuna = selectedComuna ? getCanchasPorComuna(selectedComuna) : [];
 
@@ -76,6 +78,26 @@ export const RaceEventForm = ({ onSubmit, onCancel, initialData, isEditing = fal
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Validar que al menos se haya seleccionado una comuna
+    if (!selectedComuna) {
+      toast({
+        title: "Comuna requerida",
+        description: "Por favor selecciona una comuna",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // Si hay canchas en la comuna pero no se seleccionó ninguna, mostrar error
+    if (canchasEnComuna.length > 0 && !formData.cancha_id) {
+      toast({
+        title: "Cancha requerida",
+        description: "Por favor selecciona una cancha",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     try {
       let imageUrls: string[] = formData.image_urls || [];
       
@@ -87,14 +109,21 @@ export const RaceEventForm = ({ onSubmit, onCancel, initialData, isEditing = fal
         imageUrls = await Promise.all(uploadPromises);
       }
       
-      onSubmit({
+      const eventData = {
         ...formData,
-        image_urls: imageUrls
-      });
+        image_urls: imageUrls,
+        // Solo incluir cancha_id si se seleccionó una cancha
+        cancha_id: formData.cancha_id || undefined
+      };
+      
+      onSubmit(eventData);
     } catch (error) {
       console.error("Error uploading images:", error);
       // Still submit without images if upload fails
-      onSubmit(formData);
+      onSubmit({
+        ...formData,
+        cancha_id: formData.cancha_id || undefined
+      });
     }
   };
 
@@ -174,7 +203,6 @@ export const RaceEventForm = ({ onSubmit, onCancel, initialData, isEditing = fal
                   setSelectedComuna(value);
                   setFormData({ ...formData, cancha_id: "" }); // Reset cancha when comuna changes
                 }}
-                required
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Selecciona una comuna" />
@@ -191,14 +219,13 @@ export const RaceEventForm = ({ onSubmit, onCancel, initialData, isEditing = fal
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="cancha">Cancha *</Label>
+            <Label htmlFor="cancha">Cancha {canchasEnComuna.length > 0 ? '*' : ''}</Label>
             {selectedComuna ? (
               <>
                 {canchasEnComuna.length > 0 ? (
                   <Select
                     value={formData.cancha_id}
                     onValueChange={(value) => setFormData({ ...formData, cancha_id: value })}
-                    required
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Selecciona una cancha" />
