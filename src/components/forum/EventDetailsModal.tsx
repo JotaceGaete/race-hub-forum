@@ -40,11 +40,11 @@ export const EventDetailsModal = ({ event, isOpen, onClose }: EventDetailsModalP
         <div className="space-y-6">
           {/* Imagen del evento */}
           {event.image_url && (
-            <div className="w-full h-48 rounded-lg overflow-hidden">
+            <div className="w-full">
               <img 
                 src={event.image_url} 
                 alt={event.title}
-                className="w-full h-full object-cover"
+                className="w-full max-h-96 object-contain rounded-lg bg-muted"
               />
             </div>
           )}
