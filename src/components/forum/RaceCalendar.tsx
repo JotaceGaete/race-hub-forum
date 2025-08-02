@@ -10,8 +10,15 @@ interface RaceEvent {
   id: string;
   title: string;
   event_date: string;
-  location: string;
+  location?: string;
   description?: string;
+  cancha?: {
+    id: string;
+    nombre: string;
+    comuna: string;
+    latitud: number;
+    longitud: number;
+  };
 }
 
 interface RaceCalendarProps {

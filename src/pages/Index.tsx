@@ -51,8 +51,9 @@ const Index = () => {
   });
 
   const filteredEvents = raceEvents.filter(event => {
+    const eventLocation = event.cancha?.comuna || event.location || "";
     const matchesLocation = !eventFilters.location || 
-                           event.location.toLowerCase().includes(eventFilters.location.toLowerCase());
+                           eventLocation.toLowerCase().includes(eventFilters.location.toLowerCase());
     const eventDate = new Date(event.event_date);
     const matchesDateFrom = !eventFilters.dateFrom || eventDate >= eventFilters.dateFrom;
     const matchesDateTo = !eventFilters.dateTo || eventDate <= eventFilters.dateTo;
@@ -66,7 +67,7 @@ const Index = () => {
         title: eventData.title,
         description: eventData.description,
         event_date: eventData.event_date.toISOString().split('T')[0],
-        location: eventData.location,
+        cancha_id: eventData.cancha_id,
         image_urls: eventData.image_urls || []
       });
       

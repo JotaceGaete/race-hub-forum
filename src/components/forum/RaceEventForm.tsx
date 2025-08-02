@@ -6,11 +6,15 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, ImagePlus, MapPin, X } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { CalendarIcon, ImagePlus, MapPin, X, AlertCircle } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { useImageUpload } from "@/hooks/useImageUpload";
+import { useCanchas } from "@/hooks/useCanchas";
+import { comunasChile } from "@/utils/comunasChile";
+import { Link } from "react-router-dom";
 
 interface RaceEventFormProps {
   onSubmit: (eventData: RaceEventData) => void;
@@ -21,7 +25,7 @@ export interface RaceEventData {
   title: string;
   description: string;
   event_date: Date;
-  location: string;
+  cancha_id?: string;
   image_urls?: string[];
 }
 
@@ -30,12 +34,16 @@ export const RaceEventForm = ({ onSubmit, onCancel }: RaceEventFormProps) => {
     title: "",
     description: "",
     event_date: new Date(),
-    location: "",
+    cancha_id: "",
     image_urls: []
   });
+  const [selectedComuna, setSelectedComuna] = useState<string>("");
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const { uploadImage, isUploading } = useImageUpload();
+  const { canchas, getCanchasPorComuna } = useCanchas();
+
+  const canchasEnComuna = selectedComuna ? getCanchasPorComuna(selectedComuna) : [];
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -153,19 +161,75 @@ export const RaceEventForm = ({ onSubmit, onCancel }: RaceEventFormProps) => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="location">Lugar *</Label>
-              <div className="relative">
-                <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                <Input
-                  id="location"
-                  value={formData.location}
-                  onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                  placeholder="Ciudad, País"
-                  className="pl-10"
-                  required
-                />
-              </div>
+              <Label htmlFor="comuna">Comuna *</Label>
+              <Select
+                value={selectedComuna}
+                onValueChange={(value) => {
+                  setSelectedComuna(value);
+                  setFormData({ ...formData, cancha_id: "" }); // Reset cancha when comuna changes
+                }}
+                required
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecciona una comuna" />
+                </SelectTrigger>
+                <SelectContent>
+                  {comunasChile.map((comuna) => (
+                    <SelectItem key={comuna} value={comuna}>
+                      {comuna}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="cancha">Cancha *</Label>
+            {selectedComuna ? (
+              <>
+                {canchasEnComuna.length > 0 ? (
+                  <Select
+                    value={formData.cancha_id}
+                    onValueChange={(value) => setFormData({ ...formData, cancha_id: value })}
+                    required
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecciona una cancha" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {canchasEnComuna.map((cancha) => (
+                        <SelectItem key={cancha.id} value={cancha.id}>
+                          {cancha.nombre}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <div className="p-4 border border-orange-200 bg-orange-50 rounded-lg">
+                    <div className="flex items-center gap-2 text-orange-700 mb-2">
+                      <AlertCircle className="w-4 h-4" />
+                      <span className="font-medium">No hay canchas disponibles</span>
+                    </div>
+                    <p className="text-sm text-orange-600 mb-3">
+                      No hay canchas registradas en {selectedComuna}. Si conoces una cancha en esta comuna, 
+                      puedes solicitar que la agreguen al sistema.
+                    </p>
+                    <Link to="/solicitar-cancha">
+                      <Button type="button" variant="outline" size="sm" className="text-orange-700 border-orange-300">
+                        Solicitar Nueva Cancha
+                      </Button>
+                    </Link>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="p-4 border border-gray-200 bg-gray-50 rounded-lg">
+                <p className="text-sm text-gray-600">
+                  Primero selecciona una comuna para ver las canchas disponibles.
+                </p>
+              </div>
+            )}
           </div>
 
           <div className="space-y-2">
