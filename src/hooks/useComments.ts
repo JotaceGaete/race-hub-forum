@@ -21,15 +21,33 @@ export const useComments = (postId: string) => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("comments")
-        .select(`
-          *,
-          user:profiles(username, full_name, avatar_url)
-        `)
+        .select("*")
         .eq("post_id", postId)
         .order("created_at", { ascending: true });
       
       if (error) throw error;
-      return data as Comment[];
+      
+      // Manually fetch profiles for each comment
+      const commentsWithUsers = await Promise.all(
+        data.map(async (comment) => {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("username, full_name, avatar_url")
+            .eq("user_id", comment.user_id)
+            .single();
+          
+          return {
+            ...comment,
+            user: profile || {
+              username: "Usuario",
+              full_name: "Usuario Anónimo",
+              avatar_url: null
+            }
+          };
+        })
+      );
+      
+      return commentsWithUsers as Comment[];
     },
   });
 };
@@ -55,14 +73,26 @@ export const useCreateComment = () => {
           user_id: user.id,
           content,
         }])
-        .select(`
-          *,
-          user:profiles(username, full_name, avatar_url)
-        `)
+        .select("*")
         .single();
       
       if (error) throw error;
-      return data;
+      
+      // Fetch profile for the created comment
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("username, full_name, avatar_url")
+        .eq("user_id", user.id)
+        .single();
+      
+      return {
+        ...data,
+        user: profile || {
+          username: "Usuario",
+          full_name: "Usuario Anónimo",
+          avatar_url: null
+        }
+      };
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["comments", data.post_id] });

@@ -38,9 +38,15 @@ export const useCreateRaceEvent = () => {
       location: string;
       image_url?: string;
     }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Usuario no autenticado");
+
       const { data, error } = await supabase
         .from("race_events")
-        .insert([eventData])
+        .insert([{
+          ...eventData,
+          user_id: user.id
+        }])
         .select()
         .single();
       

@@ -43,9 +43,15 @@ export const useCreatePost = () => {
       category_id: string;
       author_name: string;
     }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Usuario no autenticado");
+
       const { data, error } = await supabase
         .from("posts")
-        .insert([postData])
+        .insert([{
+          ...postData,
+          user_id: user.id
+        }])
         .select()
         .single();
       
