@@ -15,13 +15,12 @@ export const ForumHeader = ({ onCreatePost, onCreateRace, onShowAuth }: ForumHea
   return (
     <div className="bg-gradient-forum p-6 rounded-lg shadow-card mb-6">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-white mb-2">
-            Foro de Carreras
-          </h1>
-          <p className="text-white/90">
-            Comparte, descubre y conecta con la comunidad runner
-          </p>
+        <div className="flex items-center">
+          <img 
+            src="/lovable-uploads/ee5000c6-0d5b-4104-a587-05cdaac2aabf.png" 
+            alt="Chileneros" 
+            className="h-12 w-auto"
+          />
         </div>
         <div className="flex items-center gap-3">
           {isAuthenticated ? (
