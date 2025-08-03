@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useComments, useCreateComment, Comment } from "@/hooks/useComments";
 import { usePostVotes, useVotePost } from "@/hooks/useVotes";
 import { useToast } from "@/hooks/use-toast";
+import { useCreatePoll } from "@/hooks/usePolls";
 import { MediaUploadSection } from "./MediaUploadSection";
 import { MediaDisplay } from "./MediaDisplay";
 import { MediaUpload, useMediaUpload } from "@/hooks/useMediaUpload";
@@ -49,6 +50,14 @@ export const PostDetailsModal = ({ post, isOpen, onClose, onEdit, onDelete }: Po
   const [commentMedia, setCommentMedia] = useState<MediaUpload[]>([]);
   const [showPollCreator, setShowPollCreator] = useState(false);
   const [pollData, setPollData] = useState<{ question: string; options: string[] } | null>(null);
+
+  // Reset poll state when modal opens/closes or post changes
+  useEffect(() => {
+    if (!isOpen || !post) {
+      setShowPollCreator(false);
+      setPollData(null);
+    }
+  }, [isOpen, post?.id]);
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const { uploadMultipleMedia } = useMediaUpload();
@@ -57,6 +66,7 @@ export const PostDetailsModal = ({ post, isOpen, onClose, onEdit, onDelete }: Po
   const createComment = useCreateComment();
   const { data: voteStats } = usePostVotes(post?.id || "skip");
   const votePost = useVotePost();
+  const createPoll = useCreatePoll();
   
   if (!post) return null;
 
@@ -112,18 +122,32 @@ export const PostDetailsModal = ({ post, isOpen, onClose, onEdit, onDelete }: Po
         }
       }
       
-      await createComment.mutateAsync({
+      // Create the comment
+      const comment = await createComment.mutateAsync({
         post_id: post.id,
         content: commentText.trim(),
         media_urls: mediaUrls.length > 0 ? mediaUrls : undefined,
         media_types: mediaTypes.length > 0 ? mediaTypes : undefined
       });
       
+      // Create poll if poll data exists
+      if (pollData && pollData.question.trim() && pollData.options.length >= 2) {
+        await createPoll.mutateAsync({
+          postId: post.id, // Associate poll with the main post for now
+          question: pollData.question.trim(),
+          options: pollData.options.filter(opt => opt.trim().length > 0)
+        });
+      }
+      
+      // Reset form state
       setCommentText("");
       setCommentMedia([]);
+      setShowPollCreator(false);
+      setPollData(null);
+      
       toast({
         title: "Comentario publicado",
-        description: "Tu comentario se ha publicado exitosamente"
+        description: pollData ? "Tu comentario y encuesta se han publicado exitosamente" : "Tu comentario se ha publicado exitosamente"
       });
     } catch (error) {
       toast({
@@ -350,10 +374,11 @@ export const PostDetailsModal = ({ post, isOpen, onClose, onEdit, onDelete }: Po
                         <p className="text-sm leading-relaxed whitespace-pre-wrap">
                           {comment.content}
                         </p>
-                        <MediaDisplay 
-                          mediaUrls={comment.media_urls} 
-                          mediaTypes={comment.media_types} 
-                        />
+                         <MediaDisplay 
+                           mediaUrls={comment.media_urls} 
+                           mediaTypes={comment.media_types} 
+                         />
+                         <PollDisplay postId={comment.id} compact={true} />
                       </>
                     )}
                   </div>
