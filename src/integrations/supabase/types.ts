@@ -378,7 +378,7 @@ export type Database = {
         Returns: boolean
       }
       is_admin_or_moderator: {
-        Args: { _user_id: string }
+        Args: Record<PropertyKey, never> | { _user_id: string }
         Returns: boolean
       }
       migrate_past_races: {
