@@ -1,12 +1,14 @@
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { User, Settings, LogOut, Loader2 } from "lucide-react";
+import { User, Settings, LogOut, Loader2, Crown } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useCurrentUserRole } from "@/hooks/useUserRoles";
 import { useNavigate } from "react-router-dom";
 
 export const UserMenu = () => {
   const { user, signOut, isSigningOut } = useAuth();
+  const { data: userRole } = useCurrentUserRole();
   const navigate = useNavigate();
 
   if (!user) return null;
@@ -68,6 +70,13 @@ export const UserMenu = () => {
           <Settings className="mr-2 h-4 w-4" />
           Configuración
         </DropdownMenuItem>
+        
+        {userRole === 'admin' && (
+          <DropdownMenuItem onClick={() => navigate('/admin')}>
+            <Crown className="mr-2 h-4 w-4" />
+            Administración
+          </DropdownMenuItem>
+        )}
         
         <DropdownMenuSeparator />
         
