@@ -82,7 +82,7 @@ export const ProfileEditModal = ({
       let avatar_url = currentProfile.avatar_url;
 
       if (avatarFile) {
-        avatar_url = await uploadImage(avatarFile, "media", "avatars");
+        avatar_url = await uploadImage(avatarFile, "avatars");
       }
 
       await updateProfile.mutateAsync({
