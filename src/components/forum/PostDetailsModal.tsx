@@ -15,6 +15,7 @@ import { MediaDisplay } from "./MediaDisplay";
 import { MediaUpload, useMediaUpload } from "@/hooks/useMediaUpload";
 import { AuthorLink } from "@/components/profile/AuthorLink";
 import { CommentActions } from "./CommentActions";
+import { PollDisplay } from "./PollDisplay";
 
 interface Post {
   id: string;
@@ -239,6 +240,8 @@ export const PostDetailsModal = ({ post, isOpen, onClose, onEdit, onDelete }: Po
               {post.content}
             </p>
           </div>
+
+          <PollDisplay postId={post.id} />
 
           {/* Comments section */}
           <div className="border-t border-border pt-6">

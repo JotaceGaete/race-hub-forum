@@ -8,6 +8,7 @@ import { RaceCalendar } from "@/components/forum/RaceCalendar";
 import { EventDetailsModal } from "@/components/forum/EventDetailsModal";
 import { PostDetailsModal } from "@/components/forum/PostDetailsModal";
 import { PostEditForm } from "@/components/forum/PostEditForm";
+import { PostCreateForm } from "@/components/forum/PostCreateForm";
 import { EventFiltersComponent, EventFilters } from "@/components/forum/EventFilters";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,6 +33,7 @@ const Index = () => {
   const [selectedPost, setSelectedPost] = useState<any>(null);
   const [editingEvent, setEditingEvent] = useState<any>(null);
   const [editingPost, setEditingPost] = useState<any>(null);
+  const [showPostCreateForm, setShowPostCreateForm] = useState(false);
   const [activeTab, setActiveTab] = useState("forum");
   const [eventFilters, setEventFilters] = useState<EventFilters>({
     location: "",
@@ -206,7 +208,7 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-6 max-w-7xl">
         <ForumHeader 
-          onCreatePost={() => toast({ title: "Función en desarrollo", description: "Próximamente disponible" })}
+          onCreatePost={() => setShowPostCreateForm(true)}
           onCreateRace={() => setShowRaceForm(true)}
           onShowAuth={() => setShowAuthForm(true)}
         />
@@ -366,6 +368,11 @@ const Index = () => {
             )}
           </DialogContent>
         </Dialog>
+
+        <PostCreateForm
+          open={showPostCreateForm}
+          onOpenChange={setShowPostCreateForm}
+        />
       </div>
     </div>
   );

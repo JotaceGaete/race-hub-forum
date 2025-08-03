@@ -7,6 +7,7 @@ import { es } from "date-fns/locale";
 import { usePostVotes, useVotePost } from "@/hooks/useVotes";
 import { useAuth } from "@/hooks/useAuth";
 import { AuthorLink } from "@/components/profile/AuthorLink";
+import { PollDisplay } from "./PollDisplay";
 
 interface Post {
   id: string;
@@ -124,6 +125,9 @@ export const PostCard = ({ post, onClick }: PostCardProps) => {
         <p className="text-sm text-muted-foreground line-clamp-3 mb-3">
           {post.content}
         </p>
+        
+        <PollDisplay postId={post.id} compact />
+        
         <div className="flex items-center gap-4 text-sm text-muted-foreground">
           <div className="flex items-center gap-1">
             <MessageSquare className="w-4 h-4" />
