@@ -7,6 +7,7 @@ import { RaceEventForm, RaceEventData } from "@/components/forum/RaceEventForm";
 import { RaceCalendar } from "@/components/forum/RaceCalendar";
 import { EventDetailsModal } from "@/components/forum/EventDetailsModal";
 import { PostDetailsModal } from "@/components/forum/PostDetailsModal";
+import { PostEditForm } from "@/components/forum/PostEditForm";
 import { EventFiltersComponent, EventFilters } from "@/components/forum/EventFilters";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,7 +16,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Search, Calendar, List, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useCategories } from "@/hooks/useCategories";
-import { usePosts } from "@/hooks/usePosts";
+import { usePosts, useUpdatePost, useDeletePost } from "@/hooks/usePosts";
 import { useRaceEvents, useCreateRaceEvent, useUpdateRaceEvent, useDeleteRaceEvent } from "@/hooks/useRaceEvents";
 import { seedInitialData } from "@/utils/seedData";
 
@@ -26,9 +27,11 @@ const Index = () => {
   const [showAuthForm, setShowAuthForm] = useState(false);
   const [showEventDetails, setShowEventDetails] = useState(false);
   const [showPostDetails, setShowPostDetails] = useState(false);
+  const [showPostEdit, setShowPostEdit] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
   const [selectedPost, setSelectedPost] = useState<any>(null);
   const [editingEvent, setEditingEvent] = useState<any>(null);
+  const [editingPost, setEditingPost] = useState<any>(null);
   const [activeTab, setActiveTab] = useState("forum");
   const [eventFilters, setEventFilters] = useState<EventFilters>({
     location: "",
@@ -43,6 +46,8 @@ const Index = () => {
   const createRaceEventMutation = useCreateRaceEvent();
   const updateRaceEventMutation = useUpdateRaceEvent();
   const deleteRaceEventMutation = useDeleteRaceEvent();
+  const updatePostMutation = useUpdatePost();
+  const deletePostMutation = useDeletePost();
 
   // Inicializar datos de ejemplo al cargar la aplicación
   useEffect(() => {
@@ -138,6 +143,51 @@ const Index = () => {
       setShowEventDetails(false);
     } catch (error) {
       // Error ya manejado en el hook
+    }
+  };
+
+  const handleEditPost = (post: any) => {
+    setEditingPost(post);
+    setShowPostDetails(false);
+    setShowPostEdit(true);
+  };
+
+  const handleUpdatePost = async (postData: { id: string; title: string; content: string; category_id: string }) => {
+    try {
+      await updatePostMutation.mutateAsync(postData);
+      
+      toast({
+        title: "¡Post actualizado!",
+        description: "Tu post ha sido actualizado exitosamente."
+      });
+      
+      setShowPostEdit(false);
+      setEditingPost(null);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Hubo un problema al actualizar el post.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleDeletePost = async (postId: string) => {
+    try {
+      await deletePostMutation.mutateAsync(postId);
+      
+      toast({
+        title: "Post eliminado",
+        description: "El post ha sido eliminado exitosamente."
+      });
+      
+      setShowPostDetails(false);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Hubo un problema al eliminar el post.",
+        variant: "destructive"
+      });
     }
   };
 
@@ -294,9 +344,28 @@ const Index = () => {
           post={selectedPost}
           isOpen={showPostDetails}
           onClose={() => setShowPostDetails(false)}
-          onEdit={() => toast({ title: "Función en desarrollo", description: "Edición de posts próximamente" })}
-          onDelete={() => toast({ title: "Función en desarrollo", description: "Eliminación de posts próximamente" })}
+          onEdit={handleEditPost}
+          onDelete={handleDeletePost}
         />
+
+        <Dialog open={showPostEdit} onOpenChange={() => {
+          setShowPostEdit(false);
+          setEditingPost(null);
+        }}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            {editingPost && (
+              <PostEditForm
+                post={editingPost}
+                onSubmit={handleUpdatePost}
+                onCancel={() => {
+                  setShowPostEdit(false);
+                  setEditingPost(null);
+                }}
+                isSubmitting={updatePostMutation.isPending}
+              />
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

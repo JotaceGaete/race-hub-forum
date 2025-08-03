@@ -121,3 +121,60 @@ export const useCreatePost = () => {
     },
   });
 };
+
+export const useUpdatePost = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (postData: {
+      id: string;
+      title: string;
+      content: string;
+      category_id: string;
+    }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Usuario no autenticado");
+
+      const { data, error } = await supabase
+        .from("posts")
+        .update({
+          title: postData.title,
+          content: postData.content,
+          category_id: postData.category_id,
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", postData.id)
+        .eq("user_id", user.id) // Solo permite editar posts propios
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
+    },
+  });
+};
+
+export const useDeletePost = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (postId: string) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Usuario no autenticado");
+
+      const { error } = await supabase
+        .from("posts")
+        .delete()
+        .eq("id", postId)
+        .eq("user_id", user.id); // Solo permite eliminar posts propios
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
+    },
+  });
+};
