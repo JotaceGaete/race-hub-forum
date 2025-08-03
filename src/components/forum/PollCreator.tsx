@@ -7,12 +7,13 @@ import { Plus, X } from "lucide-react";
 
 interface PollCreatorProps {
   onPollChange: (poll: { question: string; options: string[] } | null) => void;
+  autoStart?: boolean;
 }
 
 const MAX_OPTIONS = 6;
 
-export const PollCreator: React.FC<PollCreatorProps> = ({ onPollChange }) => {
-  const [includePoll, setIncludePoll] = useState(false);
+export const PollCreator: React.FC<PollCreatorProps> = ({ onPollChange, autoStart = false }) => {
+  const [includePoll, setIncludePoll] = useState(autoStart);
   const [question, setQuestion] = useState("");
   const [options, setOptions] = useState<string[]>(["", ""]);
 

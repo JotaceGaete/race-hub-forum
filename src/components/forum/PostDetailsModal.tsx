@@ -285,7 +285,7 @@ export const PostDetailsModal = ({ post, isOpen, onClose, onEdit, onDelete }: Po
 
                 {showPollCreator && (
                   <div className="mb-3">
-                    <PollCreator onPollChange={setPollData} />
+                    <PollCreator onPollChange={setPollData} autoStart={true} />
                   </div>
                 )}
                 
