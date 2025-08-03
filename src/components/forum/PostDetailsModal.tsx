@@ -10,6 +10,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { useComments, useCreateComment, Comment } from "@/hooks/useComments";
 import { usePostVotes, useVotePost } from "@/hooks/useVotes";
 import { useToast } from "@/hooks/use-toast";
+import { MediaUploadSection } from "./MediaUploadSection";
+import { MediaDisplay } from "./MediaDisplay";
+import { MediaUpload } from "@/hooks/useMediaUpload";
 
 interface Post {
   id: string;
@@ -34,6 +37,7 @@ interface PostDetailsModalProps {
 
 export const PostDetailsModal = ({ post, isOpen, onClose, onEdit, onDelete }: PostDetailsModalProps) => {
   const [commentText, setCommentText] = useState("");
+  const [commentMedia, setCommentMedia] = useState<MediaUpload[]>([]);
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
   
@@ -74,11 +78,18 @@ export const PostDetailsModal = ({ post, isOpen, onClose, onEdit, onDelete }: Po
     }
 
     try {
+      const mediaUrls = commentMedia.map(media => media.url);
+      const mediaTypes = commentMedia.map(media => media.type === 'image' ? 'image/jpeg' : 'video/mp4');
+      
       await createComment.mutateAsync({
         post_id: post.id,
-        content: commentText.trim()
+        content: commentText.trim(),
+        media_urls: mediaUrls.length > 0 ? mediaUrls : undefined,
+        media_types: mediaTypes.length > 0 ? mediaTypes : undefined
       });
+      
       setCommentText("");
+      setCommentMedia([]);
       toast({
         title: "Comentario publicado",
         description: "Tu comentario se ha publicado exitosamente"
@@ -212,7 +223,14 @@ export const PostDetailsModal = ({ post, isOpen, onClose, onEdit, onDelete }: Po
                   className="mb-3 resize-none"
                   rows={3}
                 />
-                <div className="flex justify-end">
+                
+                <MediaUploadSection
+                  onMediaUploaded={setCommentMedia}
+                  maxFiles={4}
+                  folder="comments"
+                />
+                
+                <div className="flex justify-end mt-3">
                   <Button 
                     onClick={handleSubmitComment}
                     disabled={!commentText.trim() || createComment.isPending}
@@ -256,6 +274,10 @@ export const PostDetailsModal = ({ post, isOpen, onClose, onEdit, onDelete }: Po
                     <p className="text-sm leading-relaxed whitespace-pre-wrap">
                       {comment.content}
                     </p>
+                    <MediaDisplay 
+                      mediaUrls={comment.media_urls} 
+                      mediaTypes={comment.media_types} 
+                    />
                   </div>
                 ))}
               </div>

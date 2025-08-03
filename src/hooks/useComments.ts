@@ -8,6 +8,8 @@ export interface Comment {
   content: string;
   created_at: string;
   updated_at: string;
+  media_urls?: string[] | null;
+  media_types?: string[] | null;
   user: {
     username: string;
     full_name: string;
@@ -59,9 +61,13 @@ export const useCreateComment = () => {
     mutationFn: async ({
       post_id,
       content,
+      media_urls,
+      media_types,
     }: {
       post_id: string;
       content: string;
+      media_urls?: string[];
+      media_types?: string[];
     }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Usuario no autenticado");
@@ -72,6 +78,8 @@ export const useCreateComment = () => {
           post_id,
           user_id: user.id,
           content,
+          media_urls,
+          media_types,
         }])
         .select("*")
         .single();
