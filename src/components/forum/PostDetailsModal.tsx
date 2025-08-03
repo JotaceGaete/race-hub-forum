@@ -16,6 +16,7 @@ import { MediaUpload, useMediaUpload } from "@/hooks/useMediaUpload";
 import { AuthorLink } from "@/components/profile/AuthorLink";
 import { CommentActions } from "./CommentActions";
 import { PollDisplay } from "./PollDisplay";
+import { PollCreator } from "./PollCreator";
 
 interface Post {
   id: string;
@@ -46,6 +47,8 @@ interface PostDetailsModalProps {
 export const PostDetailsModal = ({ post, isOpen, onClose, onEdit, onDelete }: PostDetailsModalProps) => {
   const [commentText, setCommentText] = useState("");
   const [commentMedia, setCommentMedia] = useState<MediaUpload[]>([]);
+  const [showPollCreator, setShowPollCreator] = useState(false);
+  const [pollData, setPollData] = useState<{ question: string; options: string[] } | null>(null);
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const { uploadMultipleMedia } = useMediaUpload();
@@ -273,11 +276,18 @@ export const PostDetailsModal = ({ post, isOpen, onClose, onEdit, onDelete }: Po
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={() => {/* TODO: Implementar encuesta en comentarios */}}
+                    onClick={() => setShowPollCreator(!showPollCreator)}
+                    className={showPollCreator ? "bg-primary/10" : ""}
                   >
                     📊 Crear Encuesta
                   </Button>
                 </div>
+
+                {showPollCreator && (
+                  <div className="mb-3">
+                    <PollCreator onPollChange={setPollData} />
+                  </div>
+                )}
                 
                 <div className="flex justify-end mt-3">
                   <Button 
