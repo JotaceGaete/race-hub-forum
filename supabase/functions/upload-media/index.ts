@@ -95,85 +95,60 @@ Deno.serve(async (req) => {
     const timestamp = Date.now()
     const fileName = `${folder}/${user.id}/${timestamp}_${Math.random().toString(36).substring(7)}.${fileExt}`
 
-    // Upload to Cloudflare R1
+    // Upload to Cloudflare R1 using simple PUT request
     const uploadUrl = `${r1Config.endpoint}/${r1Config.bucketName}/${fileName}`
     
-    // Create proper date header for AWS4 signature
-    const now = new Date()
-    const amzDate = now.toISOString().replace(/[:-]|\.\d{3}/g, '')
-    const dateStamp = amzDate.slice(0, 8)
-    
-    // Simple AWS4 signature implementation for Cloudflare R2
-    const algorithm = 'AWS4-HMAC-SHA256'
-    const service = 's3'
-    const region = 'auto'
-    const credentialScope = `${dateStamp}/${region}/${service}/aws4_request`
-    
-    // For simplicity, we'll use UNSIGNED-PAYLOAD which is supported by R2
-    const canonical_headers = `host:${r1Config.accountId}.r2.cloudflarestorage.com\nx-amz-content-sha256:UNSIGNED-PAYLOAD\nx-amz-date:${amzDate}\n`
-    const signed_headers = 'host;x-amz-content-sha256;x-amz-date'
-    
-    const canonical_request = [
-      'PUT',
-      `/${r1Config.bucketName}/${fileName}`,
-      '',
-      canonical_headers,
-      signed_headers,
-      'UNSIGNED-PAYLOAD'
-    ].join('\n')
-    
-    // Create the string to sign
-    const string_to_sign = [
-      algorithm,
-      amzDate,
-      credentialScope,
-      await crypto.subtle.digest('SHA-256', new TextEncoder().encode(canonical_request)).then(
-        hash => Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('')
-      )
-    ].join('\n')
-    
-    // Create signature
-    const getSignatureKey = async (key: string, dateStamp: string, regionName: string, serviceName: string) => {
-      const kDate = await crypto.subtle.importKey('raw', new TextEncoder().encode('AWS4' + key), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']).then(k =>
-        crypto.subtle.sign('HMAC', k, new TextEncoder().encode(dateStamp))
-      )
-      const kRegion = await crypto.subtle.importKey('raw', kDate, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']).then(k =>
-        crypto.subtle.sign('HMAC', k, new TextEncoder().encode(regionName))
-      )
-      const kService = await crypto.subtle.importKey('raw', kRegion, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']).then(k =>
-        crypto.subtle.sign('HMAC', k, new TextEncoder().encode(serviceName))
-      )
-      const kSigning = await crypto.subtle.importKey('raw', kService, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']).then(k =>
-        crypto.subtle.sign('HMAC', k, new TextEncoder().encode('aws4_request'))
-      )
-      return kSigning
-    }
-    
-    const signingKey = await getSignatureKey(r1Config.secretAccessKey, dateStamp, region, service)
-    const signature = await crypto.subtle.importKey('raw', signingKey, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']).then(k =>
-      crypto.subtle.sign('HMAC', k, new TextEncoder().encode(string_to_sign))
-    ).then(sig => Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, '0')).join(''))
-    
-    const authorization_header = `${algorithm} Credential=${r1Config.accessKeyId}/${credentialScope}, SignedHeaders=${signed_headers}, Signature=${signature}`
+    // Use basic auth for R2 (simpler than AWS4)
+    const authString = `${r1Config.accessKeyId}:${r1Config.secretAccessKey}`;
+    const authBase64 = btoa(authString);
     
     const uploadResponse = await fetch(uploadUrl, {
       method: 'PUT',
       headers: {
         'Content-Type': file.type,
-        'Host': `${r1Config.accountId}.r2.cloudflarestorage.com`,
-        'X-Amz-Date': amzDate,
-        'X-Amz-Content-Sha256': 'UNSIGNED-PAYLOAD',
-        'Authorization': authorization_header
+        'Authorization': `Basic ${authBase64}`,
       },
       body: file.stream()
     })
 
     if (!uploadResponse.ok) {
       console.error('R1 upload failed:', await uploadResponse.text())
-      return new Response(
-        JSON.stringify({ error: 'Upload failed' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
+      
+      // Fallback: try uploading to Supabase Storage
+      try {
+        const fileExt = file.name.split('.').pop()
+        const fileName = `${folder}/${user.id}/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`
+        
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('media')
+          .upload(fileName, file)
+        
+        if (uploadError) throw uploadError
+        
+        const { data: urlData } = supabase.storage
+          .from('media')
+          .getPublicUrl(fileName)
+        
+        return new Response(
+          JSON.stringify({ 
+            url: urlData.publicUrl,
+            type: file.type.startsWith('image/') ? 'image' : 'video'
+          }),
+          { 
+            status: 200, 
+            headers: { 
+              ...corsHeaders, 
+              'Content-Type': 'application/json' 
+            } 
+          }
+        )
+      } catch (fallbackError) {
+        console.error('Supabase storage fallback failed:', fallbackError)
+        return new Response(
+          JSON.stringify({ error: 'Upload failed completely' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
     }
 
     // Generate correct public URL for Cloudflare R1
