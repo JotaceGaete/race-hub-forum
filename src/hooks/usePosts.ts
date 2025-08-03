@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 export interface Post {
@@ -22,7 +23,9 @@ export interface Post {
 }
 
 export const usePosts = () => {
-  return useQuery({
+  const queryClient = useQueryClient();
+  
+  const query = useQuery({
     queryKey: ["posts"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -59,7 +62,33 @@ export const usePosts = () => {
       
       return postsWithProfiles as Post[];
     },
+    refetchInterval: 30000, // Polling fallback every 30 seconds
   });
+
+  // Set up real-time subscription for posts
+  useEffect(() => {
+    const channel = supabase
+      .channel('posts-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'posts'
+        },
+        () => {
+          // Invalidate and refetch posts when any change occurs
+          queryClient.invalidateQueries({ queryKey: ["posts"] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
+
+  return query;
 };
 
 export const useCreatePost = () => {

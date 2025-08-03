@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 export interface Comment {
@@ -22,7 +23,9 @@ export interface Comment {
 }
 
 export const useComments = (postId: string) => {
-  return useQuery({
+  const queryClient = useQueryClient();
+  
+  const query = useQuery({
     queryKey: ["comments", postId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -56,7 +59,36 @@ export const useComments = (postId: string) => {
       return commentsWithUsers as Comment[];
     },
     enabled: !!postId && postId !== "skip",
+    refetchInterval: 30000, // Polling fallback every 30 seconds
   });
+
+  // Set up real-time subscription for comments
+  useEffect(() => {
+    if (!postId || postId === "skip") return;
+
+    const channel = supabase
+      .channel('comments-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'comments',
+          filter: `post_id=eq.${postId}`
+        },
+        () => {
+          // Invalidate and refetch comments when any change occurs
+          queryClient.invalidateQueries({ queryKey: ["comments", postId] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [postId, queryClient]);
+
+  return query;
 };
 
 export const useCreateComment = () => {
