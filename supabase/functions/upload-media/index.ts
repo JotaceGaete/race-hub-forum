@@ -5,14 +5,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-interface CloudflareR1Config {
-  accountId: string
-  accessKeyId: string
-  secretAccessKey: string
-  bucketName: string
-  endpoint: string
-}
-
 Deno.serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -22,7 +14,7 @@ Deno.serve(async (req) => {
   try {
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     )
 
     // Get user from auth header
@@ -39,6 +31,7 @@ Deno.serve(async (req) => {
     )
 
     if (authError || !user) {
+      console.error('Auth error:', authError)
       return new Response(
         JSON.stringify({ error: 'Unauthorized' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -63,6 +56,8 @@ Deno.serve(async (req) => {
       )
     }
 
+    console.log('File received:', file.name, 'Size:', file.size, 'Type:', file.type)
+
     // Validate file type
     const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'video/mp4', 'video/webm', 'video/quicktime']
     if (!allowedTypes.includes(file.type)) {
@@ -81,82 +76,41 @@ Deno.serve(async (req) => {
       )
     }
 
-    // Get Cloudflare R1 configuration
-    const r1Config: CloudflareR1Config = {
-      accountId: Deno.env.get('CLOUDFLARE_ACCOUNT_ID') ?? '',
-      accessKeyId: Deno.env.get('CLOUDFLARE_R1_ACCESS_KEY_ID') ?? '',
-      secretAccessKey: Deno.env.get('CLOUDFLARE_R1_SECRET_ACCESS_KEY') ?? '',
-      bucketName: Deno.env.get('CLOUDFLARE_R1_BUCKET_NAME') ?? '',
-      endpoint: `https://${Deno.env.get('CLOUDFLARE_ACCOUNT_ID')}.r2.cloudflarestorage.com`
-    }
-
     // Generate unique filename
     const fileExt = file.name.split('.').pop()
     const timestamp = Date.now()
     const fileName = `${folder}/${user.id}/${timestamp}_${Math.random().toString(36).substring(7)}.${fileExt}`
 
-    // Upload to Cloudflare R1 using simple PUT request
-    const uploadUrl = `${r1Config.endpoint}/${r1Config.bucketName}/${fileName}`
-    
-    // Use basic auth for R2 (simpler than AWS4)
-    const authString = `${r1Config.accessKeyId}:${r1Config.secretAccessKey}`;
-    const authBase64 = btoa(authString);
-    
-    const uploadResponse = await fetch(uploadUrl, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': file.type,
-        'Authorization': `Basic ${authBase64}`,
-      },
-      body: file.stream()
-    })
+    console.log('Uploading to Supabase Storage:', fileName)
 
-    if (!uploadResponse.ok) {
-      console.error('R1 upload failed:', await uploadResponse.text())
-      
-      // Fallback: try uploading to Supabase Storage
-      try {
-        const fileExt = file.name.split('.').pop()
-        const fileName = `${folder}/${user.id}/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`
-        
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('media')
-          .upload(fileName, file)
-        
-        if (uploadError) throw uploadError
-        
-        const { data: urlData } = supabase.storage
-          .from('media')
-          .getPublicUrl(fileName)
-        
-        return new Response(
-          JSON.stringify({ 
-            url: urlData.publicUrl,
-            type: file.type.startsWith('image/') ? 'image' : 'video'
-          }),
-          { 
-            status: 200, 
-            headers: { 
-              ...corsHeaders, 
-              'Content-Type': 'application/json' 
-            } 
-          }
-        )
-      } catch (fallbackError) {
-        console.error('Supabase storage fallback failed:', fallbackError)
-        return new Response(
-          JSON.stringify({ error: 'Upload failed completely' }),
-          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        )
-      }
+    // Upload directly to Supabase Storage
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from('media')
+      .upload(fileName, file, {
+        contentType: file.type,
+        upsert: false
+      })
+
+    if (uploadError) {
+      console.error('Supabase upload error:', uploadError)
+      return new Response(
+        JSON.stringify({ error: 'Upload failed: ' + uploadError.message }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
     }
 
-    // Generate correct public URL for Cloudflare R1
-    const publicUrl = `https://${r1Config.bucketName}.${r1Config.accountId}.r2.cloudflarestorage.com/${fileName}`
-    
+    console.log('Upload successful:', uploadData)
+
+    // Get public URL
+    const { data: urlData } = supabase.storage
+      .from('media')
+      .getPublicUrl(fileName)
+
+    console.log('Public URL:', urlData.publicUrl)
+
     return new Response(
       JSON.stringify({ 
-        url: publicUrl,
+        url: urlData.publicUrl,
         type: file.type.startsWith('image/') ? 'image' : 'video'
       }),
       { 
@@ -171,7 +125,7 @@ Deno.serve(async (req) => {
   } catch (error) {
     console.error('Upload error:', error)
     return new Response(
-      JSON.stringify({ error: 'Internal server error' }),
+      JSON.stringify({ error: 'Internal server error: ' + error.message }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   }
