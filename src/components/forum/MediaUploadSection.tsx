@@ -6,7 +6,7 @@ import { useMediaUpload, MediaUpload } from "@/hooks/useMediaUpload";
 import { toast } from "sonner";
 
 interface MediaUploadSectionProps {
-  onMediaUploaded: (media: MediaUpload[]) => void;
+  onMediaUploaded: (media: MediaUpload[] | ((prev: MediaUpload[]) => MediaUpload[])) => void;
   maxFiles?: number;
   folder?: string;
 }
@@ -48,11 +48,23 @@ export const MediaUploadSection = ({
       return true;
     });
 
+    // Add files as preview objects (not uploaded yet)
+    const previewMedia: MediaUpload[] = validFiles.map(file => ({
+      url: URL.createObjectURL(file),
+      type: file.type.startsWith('image/') ? 'image' : 'video',
+      file: file
+    }));
+
     setPreviewFiles(prev => [...prev, ...validFiles]);
+    onMediaUploaded(previewMedia);
   };
 
   const removeFile = (index: number) => {
+    const removedFile = previewFiles[index];
     setPreviewFiles(prev => prev.filter((_, i) => i !== index));
+    
+    // Also remove from parent component
+    onMediaUploaded(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleUpload = async () => {

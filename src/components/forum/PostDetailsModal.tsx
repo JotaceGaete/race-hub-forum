@@ -12,7 +12,7 @@ import { usePostVotes, useVotePost } from "@/hooks/useVotes";
 import { useToast } from "@/hooks/use-toast";
 import { MediaUploadSection } from "./MediaUploadSection";
 import { MediaDisplay } from "./MediaDisplay";
-import { MediaUpload } from "@/hooks/useMediaUpload";
+import { MediaUpload, useMediaUpload } from "@/hooks/useMediaUpload";
 import { AuthorLink } from "@/components/profile/AuthorLink";
 
 interface Post {
@@ -46,6 +46,7 @@ export const PostDetailsModal = ({ post, isOpen, onClose, onEdit, onDelete }: Po
   const [commentMedia, setCommentMedia] = useState<MediaUpload[]>([]);
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
+  const { uploadMultipleMedia } = useMediaUpload();
   
   const { data: comments = [], isLoading: commentsLoading } = useComments(post?.id || "");
   const createComment = useCreateComment();
@@ -84,8 +85,27 @@ export const PostDetailsModal = ({ post, isOpen, onClose, onEdit, onDelete }: Po
     }
 
     try {
-      const mediaUrls = commentMedia.map(media => media.url);
-      const mediaTypes = commentMedia.map(media => media.type === 'image' ? 'image/jpeg' : 'video/mp4');
+      let mediaUrls: string[] = [];
+      let mediaTypes: string[] = [];
+      
+      // First upload any pending media files
+      if (commentMedia.length > 0) {
+        // If commentMedia has files with File objects, upload them first
+        const filesToUpload = commentMedia.filter(media => media.file);
+        if (filesToUpload.length > 0) {
+          const uploadedFiles = await uploadMultipleMedia(
+            filesToUpload.map(m => m.file!), 
+            'comments'
+          );
+          
+          mediaUrls = uploadedFiles.map(file => file.url);
+          mediaTypes = uploadedFiles.map(file => file.type === 'image' ? 'image/jpeg' : 'video/mp4');
+        } else {
+          // Already uploaded files
+          mediaUrls = commentMedia.map(media => media.url);
+          mediaTypes = commentMedia.map(media => media.type === 'image' ? 'image/jpeg' : 'video/mp4');
+        }
+      }
       
       await createComment.mutateAsync({
         post_id: post.id,

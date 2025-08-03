@@ -6,6 +6,7 @@ import { toast } from "sonner";
 export interface MediaUpload {
   url: string;
   type: 'image' | 'video';
+  file?: File; // For preview before upload
 }
 
 export const useMediaUpload = () => {
@@ -45,7 +46,7 @@ export const useMediaUpload = () => {
     }
   };
 
-  const uploadMultipleMedia = async (
+  const uploadMultipleFiles = async (
     files: File[],
     folder: string = 'comments'
   ): Promise<MediaUpload[]> => {
@@ -57,7 +58,7 @@ export const useMediaUpload = () => {
 
   return {
     uploadMedia,
-    uploadMultipleMedia,
+    uploadMultipleMedia: uploadMultipleFiles,
     isUploading,
   };
 };
