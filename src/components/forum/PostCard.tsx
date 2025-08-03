@@ -6,6 +6,7 @@ import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 import { usePostVotes, useVotePost } from "@/hooks/useVotes";
 import { useAuth } from "@/hooks/useAuth";
+import { AuthorLink } from "@/components/profile/AuthorLink";
 
 interface Post {
   id: string;
@@ -16,6 +17,11 @@ interface Post {
   category?: {
     name: string;
     color: string;
+  };
+  profile?: {
+    username: string | null;
+    full_name: string | null;
+    avatar_url: string | null;
   };
 }
 
@@ -74,7 +80,16 @@ export const PostCard = ({ post, onClick }: PostCardProps) => {
               </div>
             </div>
             <h3 className="text-lg font-semibold mb-2 line-clamp-2">{post.title}</h3>
-            <p className="text-sm text-muted-foreground mb-2">por {post.author_name}</p>
+            <div className="mb-2">
+              <span className="text-sm text-muted-foreground">por </span>
+              <AuthorLink
+                username={post.profile?.username}
+                full_name={post.profile?.full_name}
+                avatar_url={post.profile?.avatar_url}
+                author_name={post.author_name}
+                showAvatar={false}
+              />
+            </div>
           </div>
           <div className="flex flex-col items-center gap-1">
             <Button 

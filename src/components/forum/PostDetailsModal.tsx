@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { MediaUploadSection } from "./MediaUploadSection";
 import { MediaDisplay } from "./MediaDisplay";
 import { MediaUpload } from "@/hooks/useMediaUpload";
+import { AuthorLink } from "@/components/profile/AuthorLink";
 
 interface Post {
   id: string;
@@ -24,6 +25,11 @@ interface Post {
   category?: {
     name: string;
     color: string;
+  };
+  profile?: {
+    username: string | null;
+    full_name: string | null;
+    avatar_url: string | null;
   };
 }
 
@@ -143,7 +149,16 @@ export const PostDetailsModal = ({ post, isOpen, onClose, onEdit, onDelete }: Po
               <DialogTitle className="text-2xl font-bold">
                 {post.title}
               </DialogTitle>
-              <p className="text-sm text-muted-foreground mt-1">por {post.author_name}</p>
+              <div className="flex items-center gap-1 mt-1">
+                <span className="text-sm text-muted-foreground">por</span>
+                <AuthorLink
+                  username={post.profile?.username}
+                  full_name={post.profile?.full_name}
+                  avatar_url={post.profile?.avatar_url}
+                  author_name={post.author_name}
+                  showAvatar={false}
+                />
+              </div>
             </div>
             
             <div className="flex items-center gap-4">
@@ -263,9 +278,12 @@ export const PostDetailsModal = ({ post, isOpen, onClose, onEdit, onDelete }: Po
                         <span className="text-xs font-medium text-primary/70 bg-primary/10 px-2 py-0.5 rounded">
                           #{index + 1}
                         </span>
-                        <span className="font-medium text-sm">
-                          {comment.user.full_name || comment.user.username}
-                        </span>
+                        <AuthorLink
+                          username={comment.user.username}
+                          full_name={comment.user.full_name}
+                          avatar_url={comment.user.avatar_url}
+                          showAvatar={true}
+                        />
                         <span className="text-xs text-muted-foreground">
                           {format(new Date(comment.created_at), "d 'de' MMMM 'de' yyyy 'a las' HH:mm", { locale: es })}
                         </span>

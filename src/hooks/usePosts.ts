@@ -7,11 +7,17 @@ export interface Post {
   content: string | null;
   category_id: string | null;
   author_name: string;
+  user_id: string | null;
   created_at: string;
   updated_at: string;
   category?: {
     name: string;
     color: string;
+  };
+  profile?: {
+    username: string | null;
+    full_name: string | null;
+    avatar_url: string | null;
   };
 }
 
@@ -28,7 +34,30 @@ export const usePosts = () => {
         .order("created_at", { ascending: false });
       
       if (error) throw error;
-      return data as Post[];
+      
+      // Fetch profiles separately for each post
+      const postsWithProfiles = await Promise.all(
+        data.map(async (post) => {
+          if (post.user_id) {
+            const { data: profile } = await supabase
+              .from("profiles")
+              .select("username, full_name, avatar_url")
+              .eq("user_id", post.user_id)
+              .single();
+            
+            return {
+              ...post,
+              profile: profile || null
+            };
+          }
+          return {
+            ...post,
+            profile: null
+          };
+        })
+      );
+      
+      return postsWithProfiles as Post[];
     },
   });
 };

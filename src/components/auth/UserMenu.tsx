@@ -3,9 +3,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { User, Settings, LogOut, Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
 
 export const UserMenu = () => {
   const { user, signOut, isSigningOut } = useAuth();
+  const navigate = useNavigate();
 
   if (!user) return null;
 
@@ -54,7 +56,10 @@ export const UserMenu = () => {
         
         <DropdownMenuSeparator />
         
-        <DropdownMenuItem>
+        <DropdownMenuItem 
+          onClick={() => user.username && navigate(`/perfil/${user.username}`)}
+          disabled={!user.username}
+        >
           <User className="mr-2 h-4 w-4" />
           Perfil
         </DropdownMenuItem>
