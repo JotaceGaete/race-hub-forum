@@ -93,7 +93,7 @@ export const useVotePoll = () => {
     },
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["poll-votes", variables.pollId] });
-      queryClient.invalidateQueries({ queryKey: ["poll", "*"] });
+      queryClient.invalidateQueries({ queryKey: ["poll"] });
     },
   });
 };

@@ -20,6 +20,19 @@ export const PollDisplay: React.FC<PollDisplayProps> = ({ postId, compact = fals
   const { mutateAsync: votePoll, isPending: isVoting } = useVotePoll();
   const { toast } = useToast();
 
+  // Debug logging
+  console.log("PollDisplay Debug:", {
+    postId,
+    poll,
+    voteStats,
+    pollId: poll?.id,
+    options: poll?.options?.map(opt => ({ 
+      id: opt.id, 
+      text: opt.option_text, 
+      vote_count: opt.vote_count 
+    }))
+  });
+
   if (pollLoading || votesLoading || !poll) return null;
 
   const handleVote = async (optionId: string) => {
