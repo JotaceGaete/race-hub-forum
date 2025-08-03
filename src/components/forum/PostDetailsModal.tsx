@@ -263,11 +263,21 @@ export const PostDetailsModal = ({ post, isOpen, onClose, onEdit, onDelete }: Po
                   rows={3}
                 />
                 
-                <MediaUploadSection
-                  onMediaUploaded={setCommentMedia}
-                  maxFiles={4}
-                  folder="comments"
-                />
+                <div className="flex items-center gap-3 mb-3">
+                  <MediaUploadSection
+                    onMediaUploaded={setCommentMedia}
+                    maxFiles={4}
+                    folder="comments"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {/* TODO: Implementar encuesta en comentarios */}}
+                  >
+                    📊 Crear Encuesta
+                  </Button>
+                </div>
                 
                 <div className="flex justify-end mt-3">
                   <Button 
