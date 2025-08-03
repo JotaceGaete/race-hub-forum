@@ -311,13 +311,28 @@ export const PostDetailsModal = ({ post, isOpen, onClose, onEdit, onDelete }: Po
                         </div>
                         <CommentActions comment={comment} />
                       </div>
-                    <p className="text-sm leading-relaxed whitespace-pre-wrap">
-                      {comment.content}
-                    </p>
-                    <MediaDisplay 
-                      mediaUrls={comment.media_urls} 
-                      mediaTypes={comment.media_types} 
-                    />
+                    {comment.vetted ? (
+                      <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 text-center">
+                        <p className="text-sm text-orange-800 italic">
+                          🛡️ Este mensaje fue eliminado por considerarse inadecuado según las políticas del foro
+                        </p>
+                        {comment.vetted_reason && (
+                          <p className="text-xs text-orange-600 mt-1">
+                            Motivo: {comment.vetted_reason}
+                          </p>
+                        )}
+                      </div>
+                    ) : (
+                      <>
+                        <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                          {comment.content}
+                        </p>
+                        <MediaDisplay 
+                          mediaUrls={comment.media_urls} 
+                          mediaTypes={comment.media_types} 
+                        />
+                      </>
+                    )}
                   </div>
                 ))}
               </div>

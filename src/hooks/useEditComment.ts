@@ -82,3 +82,50 @@ export const useDeleteComment = () => {
     },
   });
 };
+
+export const useVetComment = () => {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({
+      commentId,
+      reason,
+    }: {
+      commentId: string;
+      reason?: string;
+    }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Usuario no autenticado");
+
+      const { data, error } = await supabase
+        .from("comments")
+        .update({
+          vetted: true,
+          vetted_by: user.id,
+          vetted_at: new Date().toISOString(),
+          vetted_reason: reason || "Contenido inapropiado según las políticas del foro",
+        })
+        .eq("id", commentId)
+        .select("post_id")
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Comentario vetado",
+        description: "El comentario ha sido marcado como inapropiado.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["comments", data.post_id] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error al vetar comentario",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+};

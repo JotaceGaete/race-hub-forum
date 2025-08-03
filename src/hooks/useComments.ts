@@ -10,6 +10,10 @@ export interface Comment {
   updated_at: string;
   media_urls?: string[] | null;
   media_types?: string[] | null;
+  vetted?: boolean;
+  vetted_by?: string | null;
+  vetted_at?: string | null;
+  vetted_reason?: string | null;
   user: {
     username: string;
     full_name: string;

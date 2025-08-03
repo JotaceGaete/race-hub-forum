@@ -4,10 +4,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Edit, Trash2, MoreVertical } from "lucide-react";
+import { Edit, Trash2, MoreVertical, Shield } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsAdminOrModerator } from "@/hooks/useUserRoles";
-import { useEditComment, useDeleteComment } from "@/hooks/useEditComment";
+import { useEditComment, useDeleteComment, useVetComment } from "@/hooks/useEditComment";
 import { Comment } from "@/hooks/useComments";
 import { MediaUploadSection } from "./MediaUploadSection";
 import { MediaDisplay } from "./MediaDisplay";
@@ -21,6 +21,7 @@ export const CommentActions = ({ comment }: CommentActionsProps) => {
   const { data: isAdminOrModerator = false } = useIsAdminOrModerator();
   const editComment = useEditComment();
   const deleteComment = useDeleteComment();
+  const vetComment = useVetComment();
   
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editContent, setEditContent] = useState(comment.content);
@@ -30,8 +31,9 @@ export const CommentActions = ({ comment }: CommentActionsProps) => {
   // Check if user can edit/delete this comment
   const canEdit = user && (user.id === comment.user_id || isAdminOrModerator);
   const canDelete = user && (user.id === comment.user_id || isAdminOrModerator);
+  const canVet = user && isAdminOrModerator && !comment.vetted;
 
-  if (!canEdit && !canDelete) {
+  if (!canEdit && !canDelete && !canVet) {
     return null;
   }
 
@@ -47,6 +49,13 @@ export const CommentActions = ({ comment }: CommentActionsProps) => {
 
   const handleDelete = async () => {
     await deleteComment.mutateAsync(comment.id);
+  };
+
+  const handleVet = async () => {
+    await vetComment.mutateAsync({
+      commentId: comment.id,
+      reason: "Contenido inapropiado según las políticas del foro",
+    });
   };
 
   const handleMediaUpdate = (urls: string[], types: string[]) => {
@@ -118,6 +127,35 @@ export const CommentActions = ({ comment }: CommentActionsProps) => {
               </div>
             </DialogContent>
           </Dialog>
+        )}
+        
+        {canVet && (
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                <Shield className="h-4 w-4 mr-2" />
+                Vetar comentario
+              </DropdownMenuItem>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>¿Vetar comentario?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  El comentario será marcado como inapropiado y se mostrará un mensaje indicando que fue eliminado por las políticas del foro. Esta acción se puede deshacer.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <AlertDialogAction 
+                  onClick={handleVet}
+                  disabled={vetComment.isPending}
+                  className="bg-orange-600 hover:bg-orange-700"
+                >
+                  {vetComment.isPending ? "Vetando..." : "Vetar"}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         )}
         
         {canDelete && (
