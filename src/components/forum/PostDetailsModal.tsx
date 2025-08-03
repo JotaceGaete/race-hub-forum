@@ -48,9 +48,9 @@ export const PostDetailsModal = ({ post, isOpen, onClose, onEdit, onDelete }: Po
   const { toast } = useToast();
   const { uploadMultipleMedia } = useMediaUpload();
   
-  const { data: comments = [], isLoading: commentsLoading } = useComments(post?.id || "");
+  const { data: comments = [], isLoading: commentsLoading } = useComments(post?.id || "skip");
   const createComment = useCreateComment();
-  const { data: voteStats } = usePostVotes(post?.id || "");
+  const { data: voteStats } = usePostVotes(post?.id || "skip");
   const votePost = useVotePost();
   
   if (!post) return null;

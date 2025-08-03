@@ -51,6 +51,7 @@ export const useComments = (postId: string) => {
       
       return commentsWithUsers as Comment[];
     },
+    enabled: !!postId && postId !== "skip",
   });
 };
 

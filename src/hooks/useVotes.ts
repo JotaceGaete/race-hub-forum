@@ -42,6 +42,7 @@ export const usePostVotes = (postId: string) => {
         total: upvotes - downvotes,
       } as VoteStats;
     },
+    enabled: !!postId && postId !== "skip",
   });
 };
 
