@@ -169,14 +169,14 @@ export const PostDetailsModal = ({ post, isOpen, onClose, onEdit, onDelete }: Po
               <DialogTitle className="text-2xl font-bold">
                 {post.title}
               </DialogTitle>
-              <div className="flex items-center gap-1 mt-1">
+              <div className="flex items-center gap-2 mt-1">
                 <span className="text-sm text-muted-foreground">por</span>
                 <AuthorLink
                   username={post.profile?.username}
                   full_name={post.profile?.full_name}
                   avatar_url={post.profile?.avatar_url}
                   author_name={post.author_name}
-                  showAvatar={false}
+                  showAvatar={true}
                 />
               </div>
             </div>

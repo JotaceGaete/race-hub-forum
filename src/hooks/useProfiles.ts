@@ -21,10 +21,10 @@ export const useProfile = (username: string) => {
         .from("profiles")
         .select("*")
         .eq("username", username)
-        .single();
+        .maybeSingle();
       
       if (error) throw error;
-      return data as UserProfile;
+      return data as UserProfile | null;
     },
     enabled: !!username,
   });

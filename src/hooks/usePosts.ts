@@ -43,7 +43,7 @@ export const usePosts = () => {
               .from("profiles")
               .select("username, full_name, avatar_url")
               .eq("user_id", post.user_id)
-              .single();
+              .maybeSingle();
             
             return {
               ...post,

@@ -80,14 +80,14 @@ export const PostCard = ({ post, onClick }: PostCardProps) => {
               </div>
             </div>
             <h3 className="text-lg font-semibold mb-2 line-clamp-2">{post.title}</h3>
-            <div className="mb-2">
+            <div className="mb-2 flex items-center gap-2">
               <span className="text-sm text-muted-foreground">por </span>
               <AuthorLink
                 username={post.profile?.username}
                 full_name={post.profile?.full_name}
                 avatar_url={post.profile?.avatar_url}
                 author_name={post.author_name}
-                showAvatar={false}
+                showAvatar={true}
               />
             </div>
           </div>
