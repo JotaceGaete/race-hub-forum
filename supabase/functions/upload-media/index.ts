@@ -117,8 +117,8 @@ Deno.serve(async (req) => {
       )
     }
 
-    // Return the public URL
-    const publicUrl = `https://pub-${r1Config.accountId}.r2.dev/${fileName}`
+    // Generate correct public URL for Cloudflare R1
+    const publicUrl = `https://${r1Config.bucketName}.${r1Config.accountId}.r2.cloudflarestorage.com/${fileName}`
     
     return new Response(
       JSON.stringify({ 

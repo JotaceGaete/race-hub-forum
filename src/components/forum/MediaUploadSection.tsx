@@ -113,31 +113,64 @@ export const MediaUploadSection = ({
 
       {/* File previews */}
       {previewFiles.length > 0 && (
-        <div className="grid grid-cols-2 gap-2 p-3 bg-muted/30 rounded-lg">
-          {previewFiles.map((file, index) => (
-            <div key={index} className="relative group">
-              <div className="flex items-center gap-2 p-2 bg-background rounded border">
+        <div className="space-y-3 p-3 bg-muted/30 rounded-lg">
+          <h4 className="text-sm font-medium">Vista previa:</h4>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {previewFiles.map((file, index) => (
+              <div key={index} className="relative group border border-border rounded-lg overflow-hidden">
                 {file.type.startsWith('image/') ? (
-                  <Image className="w-4 h-4 text-blue-500" />
+                  <div className="relative">
+                    <img
+                      src={URL.createObjectURL(file)}
+                      alt={file.name}
+                      className="w-full h-32 object-cover"
+                    />
+                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        className="h-8 w-8 p-0"
+                        onClick={() => removeFile(index)}
+                        disabled={isUploading}
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
                 ) : (
-                  <Video className="w-4 h-4 text-purple-500" />
+                  <div className="relative">
+                    <video
+                      src={URL.createObjectURL(file)}
+                      className="w-full h-32 object-cover"
+                      muted
+                      preload="metadata"
+                    />
+                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        className="h-8 w-8 p-0"
+                        onClick={() => removeFile(index)}
+                        disabled={isUploading}
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
                 )}
-                <span className="text-xs truncate flex-1" title={file.name}>
-                  {file.name}
-                </span>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                  onClick={() => removeFile(index)}
-                  disabled={isUploading}
-                >
-                  <X className="w-3 h-3" />
-                </Button>
+                <div className="p-2 bg-background/90">
+                  <p className="text-xs truncate font-medium" title={file.name}>
+                    {file.name}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {(file.size / 1024 / 1024).toFixed(2)} MB
+                  </p>
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       )}
 
