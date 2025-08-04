@@ -227,9 +227,32 @@ const Index = () => {
 
           <TabsContent value="forum" className="space-y-6">
             <div className="flex flex-col lg:flex-row gap-6">
-              {/* Sidebar con categorías */}
-              <div className="lg:w-80 space-y-4">
-                <div className="space-y-4">
+              {/* Sidebar con categorías - Sticky en desktop, móvil arriba */}
+              <div className="lg:w-80">
+                {/* Versión móvil - Categorías en la parte superior */}
+                <div className="lg:hidden mb-4">
+                  <h2 className="text-xl font-semibold mb-3">Categorías</h2>
+                  <div className="flex flex-wrap gap-2">
+                    {categories.map(category => (
+                      <button
+                        key={category.id}
+                        onClick={() => setSelectedCategory(
+                          selectedCategory === category.name ? null : category.name
+                        )}
+                        className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+                          selectedCategory === category.name
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
+                        }`}
+                      >
+                        {category.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                
+                {/* Versión desktop - Sidebar sticky */}
+                <div className="hidden lg:block lg:sticky lg:top-6 space-y-4">
                   <h2 className="text-xl font-semibold">Categorías</h2>
                   <div className="space-y-3">
                     {categories.map(category => (
